@@ -4,6 +4,8 @@ var _joi = require("../../joi-schemas/joi");
 
 var _internal = require("./internal");
 
+var _workerMessaging = require("../../utils/jobs/worker-messaging");
+
 const chalk = require(`chalk`);
 
 const _ = require(`lodash`);
@@ -82,7 +84,7 @@ const shadowCreatePagePath = _.memoize(require(`../../internal-plugins/webpack-t
 
 const {
   createInternalJob
-} = require(`../../utils/jobs-manager`);
+} = require(`../../utils/jobs/manager`);
 
 const actions = {};
 const isWindows = platform() === `win32`;
@@ -1194,6 +1196,12 @@ actions.createJob = (job, plugin = null) => {
 
 actions.createJobV2 = (job, plugin) => (dispatch, getState) => {
   const internalJob = createInternalJob(job, plugin);
+  const maybeWorkerPromise = (0, _workerMessaging.maybeSendJobToMainProcess)(internalJob);
+
+  if (maybeWorkerPromise) {
+    return maybeWorkerPromise;
+  }
+
   return (0, _internal.createJobV2FromInternalJob)(internalJob)(dispatch, getState);
 };
 /**

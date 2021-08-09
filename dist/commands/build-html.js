@@ -28,6 +28,8 @@ var _webpackErrorUtils = require("../utils/webpack-error-utils");
 
 var buildUtils = _interopRequireWildcard(require("./build-utils"));
 
+var _getPageData = require("../utils/get-page-data");
+
 var _types = require("./types");
 
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -85,7 +87,7 @@ const runWebpack = (compilerConfig, stage, directory, parentSpan) => new _bluebi
         return reject(err);
       } else {
         return resolve({
-          stats,
+          stats: stats,
           waitForCompilerClose
         });
       }
@@ -120,7 +122,7 @@ const runWebpack = (compilerConfig, stage, directory, parentSpan) => new _bluebi
 
         oldHash = newHash;
         return resolve({
-          stats,
+          stats: stats,
           waitForCompilerClose: Promise.resolve()
         });
       }
@@ -136,14 +138,14 @@ const doBuildRenderer = async ({
     waitForCompilerClose
   } = await runWebpack(webpackConfig, stage, directory, parentSpan);
 
-  if (stats !== null && stats !== void 0 && stats.hasErrors()) {
+  if (stats.hasErrors()) {
     _reporter.default.panic((0, _webpackErrorUtils.structureWebpackErrors)(stage, stats.compilation.errors));
   }
 
-  if (stage === `build-html` && _redux.store.getState().html.ssrCompilationHash !== (stats === null || stats === void 0 ? void 0 : stats.hash)) {
+  if (stage === `build-html` && _redux.store.getState().html.ssrCompilationHash !== stats.hash) {
     _redux.store.dispatch({
       type: `SET_SSR_WEBPACK_COMPILATION_HASH`,
-      payload: stats === null || stats === void 0 ? void 0 : stats.hash
+      payload: stats.hash
     });
   } // render-page.js is hard coded in webpack.config
 
@@ -257,13 +259,40 @@ class BuildHTMLError extends Error {
 
 }
 
+const truncateObjStrings = obj => {
+  // Recursively truncate strings nested in object
+  // These objs can be quite large, but we want to preserve each field
+  for (const key in obj) {
+    if (typeof obj[key] === `object`) {
+      truncateObjStrings(obj[key]);
+    } else if (typeof obj[key] === `string`) {
+      obj[key] = (0, _lodash.truncate)(obj[key], {
+        length: 250
+      });
+    }
+  }
+
+  return obj;
+};
+
 const doBuildPages = async (rendererPath, pagePaths, activity, workerPool, stage) => {
   try {
     await renderHTMLQueue(workerPool, activity, rendererPath, pagePaths, stage);
   } catch (error) {
+    var _error$context;
+
     const prettyError = await (0, _errors.createErrorFromString)(error.stack, `${rendererPath}.map`);
     const buildError = new BuildHTMLError(prettyError);
     buildError.context = error.context;
+
+    if (error !== null && error !== void 0 && (_error$context = error.context) !== null && _error$context !== void 0 && _error$context.path) {
+      const pageData = await (0, _getPageData.getPageData)(error.context.path);
+      const truncatedPageData = truncateObjStrings(pageData);
+      const pageDataMessage = `Page data from page-data.json for the failed page "${error.context.path}": ${JSON.stringify(truncatedPageData, null, 2)}`;
+
+      _reporter.default.error(pageDataMessage);
+    }
+
     throw buildError;
   }
 }; // TODO remove in v4 - this could be a "public" api

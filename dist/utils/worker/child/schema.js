@@ -19,18 +19,21 @@ function setInferenceMetadata() {
 }
 
 async function buildSchema() {
-  var _workerStore$config;
+  var _workerStore$config$p, _workerStore$config;
 
-  const workerStore = _redux.store.getState();
+  const workerStore = _redux.store.getState(); // pathPrefix: '' will at least be defined when config is loaded
 
-  if (!(workerStore !== null && workerStore !== void 0 && (_workerStore$config = workerStore.config) !== null && _workerStore$config !== void 0 && _workerStore$config.plugins)) {
+
+  if (((_workerStore$config$p = workerStore === null || workerStore === void 0 ? void 0 : (_workerStore$config = workerStore.config) === null || _workerStore$config === void 0 ? void 0 : _workerStore$config.pathPrefix) !== null && _workerStore$config$p !== void 0 ? _workerStore$config$p : null) === null) {
     throw Error(`Config loading didn't finish before attempting to build schema in worker`);
   }
 
   setInferenceMetadata();
-  await (0, _apiRunnerNode.default)(`createSchemaCustomization`);
+  await (0, _apiRunnerNode.default)(`createSchemaCustomization`); // build() runs other lifecycles like "createResolvers" or "setFieldsOnGraphQLNodeType" internally
+
   await (0, _schema.build)({
     fullMetadataBuild: false,
+    freeze: true,
     parentSpan: {}
   });
 }

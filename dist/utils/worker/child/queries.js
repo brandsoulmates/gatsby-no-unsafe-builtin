@@ -1,7 +1,8 @@
 "use strict";
 
 exports.__esModule = true;
-exports.setQueries = setQueries;
+exports.setComponents = setComponents;
+exports.saveQueriesDependencies = saveQueriesDependencies;
 exports.runQueries = runQueries;
 
 var _services = require("../../../services");
@@ -16,11 +17,62 @@ var _state = require("./state");
 
 var _schema = require("./schema");
 
-function setQueries() {
+function setComponents() {
   (0, _state.setState)([`components`, `staticQueryComponents`]);
 }
 
+function saveQueriesDependencies() {
+  // Drop `queryNodes` from query state - it can be restored from other pieces of state
+  // and is there only as a perf optimization
+  const pickNecessaryQueryState = state => {
+    var _state$queries;
+
+    if (!(state !== null && state !== void 0 && (_state$queries = state.queries) !== null && _state$queries !== void 0 && _state$queries.queryNodes)) return state;
+    return { ...state,
+      queries: { ...state.queries,
+        queryNodes: new Map()
+      }
+    };
+  };
+
+  (0, _redux.savePartialStateToDisk)([`queries`], process.env.GATSBY_WORKER_ID, pickNecessaryQueryState);
+}
+
+let gqlRunner;
+
+function getGraphqlRunner() {
+  if (!gqlRunner) {
+    gqlRunner = new _graphqlRunner.GraphQLRunner(_redux.store, {
+      collectStats: true,
+      graphqlTracing: _redux.store.getState().program.graphqlTracing
+    });
+  }
+
+  return gqlRunner;
+}
+
 async function runQueries(queryIds) {
+  const actionsToReplay = [];
+
+  const unsubscribe = _redux.store.subscribe(() => {
+    const action = _redux.store.getState().lastAction;
+
+    if (action.type === `QUERY_START` || action.type === `PAGE_QUERY_RUN` || action.type === `ADD_PENDING_PAGE_DATA_WRITE` // Note: Instead of saving/replaying `CREATE_COMPONENT_DEPENDENCY` action
+    // we do state merging once at the end of the query running (replaying this action is expensive)
+    ) {
+        actionsToReplay.push(action);
+      }
+  });
+
+  try {
+    await doRunQueries(queryIds);
+    return actionsToReplay;
+  } finally {
+    unsubscribe();
+  }
+}
+
+async function doRunQueries(queryIds) {
   const workerStore = _redux.store.getState(); // If buildSchema() didn't run yet, execute it
 
 
@@ -28,11 +80,8 @@ async function runQueries(queryIds) {
     await (0, _schema.buildSchema)();
   }
 
-  setQueries();
-  const graphqlRunner = new _graphqlRunner.GraphQLRunner(_redux.store, {
-    collectStats: true,
-    graphqlTracing: workerStore.program.graphqlTracing
-  });
+  setComponents();
+  const graphqlRunner = getGraphqlRunner();
   await (0, _services.runStaticQueries)({
     queryIds,
     store: _redux.store,

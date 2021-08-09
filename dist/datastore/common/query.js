@@ -7,6 +7,7 @@ exports.getFilterStatement = getFilterStatement;
 exports.prefixResolvedFields = prefixResolvedFields;
 exports.prepareQueryArgs = prepareQueryArgs;
 exports.objectToDottedField = objectToDottedField;
+exports.sortBySpecificity = sortBySpecificity;
 exports.DbComparator = void 0;
 
 var _ = _interopRequireWildcard(require("lodash"));
@@ -211,5 +212,38 @@ function objectToDottedField(obj, path = []) {
     }
   });
   return result;
+}
+
+const comparatorSpecificity = {
+  [DbComparator.EQ]: 80,
+  [DbComparator.IN]: 70,
+  [DbComparator.GTE]: 60,
+  [DbComparator.LTE]: 50,
+  [DbComparator.GT]: 40,
+  [DbComparator.LT]: 30,
+  [DbComparator.NIN]: 20,
+  [DbComparator.NE]: 10
+};
+
+function sortBySpecificity(all) {
+  return [...all].sort(compareBySpecificityDesc);
+}
+
+function compareBySpecificityDesc(a, b) {
+  const aComparator = getFilterStatement(a).comparator;
+  const bComparator = getFilterStatement(b).comparator;
+
+  if (aComparator === bComparator) {
+    return 0;
+  }
+
+  const aSpecificity = comparatorSpecificity[aComparator];
+  const bSpecificity = comparatorSpecificity[bComparator];
+
+  if (!aSpecificity || !bSpecificity) {
+    throw new Error(`Unexpected comparator pair: ${aComparator}, ${bComparator}`);
+  }
+
+  return aSpecificity > bSpecificity ? -1 : 1;
 }
 //# sourceMappingURL=query.js.map

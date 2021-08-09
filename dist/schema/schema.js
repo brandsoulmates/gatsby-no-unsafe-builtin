@@ -88,6 +88,7 @@ const buildSchema = async ({
   printConfig,
   typeConflictReporter,
   inferenceMetadata,
+  freeze = false,
   parentSpan
 }) => {
   // FIXME: consider removing .ready here - it is needed for various tests to pass (although probably harmless)
@@ -104,7 +105,12 @@ const buildSchema = async ({
     parentSpan
   }); // const { printSchema } = require(`graphql`)
 
-  const schema = schemaComposer.buildSchema(); // console.log(printSchema(schema))
+  const schema = schemaComposer.buildSchema();
+
+  if (freeze) {
+    freezeTypeComposers(schemaComposer);
+  } // console.log(printSchema(schema))
+
 
   return schema;
 };

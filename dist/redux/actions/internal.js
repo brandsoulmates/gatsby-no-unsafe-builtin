@@ -11,7 +11,7 @@ var _joi = require("../../joi-schemas/joi");
 
 var _didYouMean = require("../../utils/did-you-mean");
 
-var _jobsManager = require("../../utils/jobs-manager");
+var _manager = require("../../utils/jobs/manager");
 
 /**
  * Create a dependency between a page and data. Probably for
@@ -371,7 +371,7 @@ const createJobV2FromInternalJob = internalJob => (dispatch, getState) => {
     return Promise.resolve(currentState.jobsV2.complete.get(jobContentDigest).result);
   }
 
-  const inProgressJobPromise = (0, _jobsManager.getInProcessJobPromise)(jobContentDigest);
+  const inProgressJobPromise = (0, _manager.getInProcessJobPromise)(jobContentDigest);
 
   if (inProgressJobPromise) {
     return inProgressJobPromise;
@@ -386,7 +386,7 @@ const createJobV2FromInternalJob = internalJob => (dispatch, getState) => {
       name: internalJob.plugin.name
     }
   });
-  const enqueuedJobPromise = (0, _jobsManager.enqueueJob)(internalJob);
+  const enqueuedJobPromise = (0, _manager.enqueueJob)(internalJob);
   return enqueuedJobPromise.then(result => {
     // store the result in redux so we have it for the next run
     dispatch({
@@ -401,7 +401,7 @@ const createJobV2FromInternalJob = internalJob => (dispatch, getState) => {
     }); // remove the job from our inProgressJobQueue as it's available in our done state.
     // this is a perf optimisations so we don't grow our memory too much when using gatsby preview
 
-    (0, _jobsManager.removeInProgressJob)(jobContentDigest);
+    (0, _manager.removeInProgressJob)(jobContentDigest);
     return result;
   });
 };

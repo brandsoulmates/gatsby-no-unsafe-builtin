@@ -149,9 +149,7 @@ async function queryRunner(graphqlRunner, queryJob, parentSpan) {
     if (queryJob.isPage) {
       // We need to save this temporarily in cache because
       // this might be incomplete at the moment
-      const resultPath = _path.default.join(program.directory, `.cache`, `json`, `${queryJob.id.replace(/\//g, `_`)}.json`);
-
-      await _fsExtra.default.outputFile(resultPath, resultJSON);
+      await (0, _pageData.savePageQueryResult)(program.directory, queryJob.id, resultJSON);
 
       _redux.store.dispatch({
         type: `ADD_PENDING_PAGE_DATA_WRITE`,

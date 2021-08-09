@@ -18,7 +18,7 @@ async function loadConfigAndPlugins(...args) {
 
   _redux.store.dispatch({
     type: `SET_PROGRAM`,
-    payload: {
+    payload: { ..._redux.store.getState().program,
       directory: siteDirectory
     }
   });

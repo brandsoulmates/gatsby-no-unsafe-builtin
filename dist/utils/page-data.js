@@ -8,6 +8,9 @@ exports.reverseFixedPagePath = reverseFixedPagePath;
 exports.readPageData = readPageData;
 exports.removePageData = removePageData;
 exports.pageDataExists = pageDataExists;
+exports.waitUntilPageQueryResultsAreStored = waitUntilPageQueryResultsAreStored;
+exports.savePageQueryResult = savePageQueryResult;
+exports.readPageQueryResult = readPageQueryResult;
 exports.writePageData = writePageData;
 exports.isFlushEnqueued = isFlushEnqueued;
 exports.flush = flush;
@@ -33,6 +36,8 @@ var _webpackStatus = require("./webpack-status");
 var _redux = require("../redux");
 
 var _queries = require("../redux/reducers/queries");
+
+var _datastore = require("../datastore");
 
 function fixedPagePath(pagePath) {
   return pagePath === `/` ? `index` : pagePath;
@@ -66,16 +71,61 @@ function pageDataExists(publicDir, pagePath) {
   return _fsExtra.default.existsSync(getFilePath(publicDir, pagePath));
 }
 
+let lmdbPageQueryResultsCache;
+
+function getLMDBPageQueryResultsCache() {
+  if (!lmdbPageQueryResultsCache) {
+    const GatsbyCacheLmdbImpl = require(`./cache-lmdb`).default;
+
+    lmdbPageQueryResultsCache = new GatsbyCacheLmdbImpl({
+      name: `internal-tmp-query-results`,
+      encoding: `string`
+    }).init();
+  }
+
+  return lmdbPageQueryResultsCache;
+}
+
+let savePageQueryResultsPromise = Promise.resolve();
+
+function waitUntilPageQueryResultsAreStored() {
+  return savePageQueryResultsPromise;
+}
+
+async function savePageQueryResult(programDir, pagePath, stringifiedResult) {
+  if ((0, _datastore.isLmdbStore)()) {
+    savePageQueryResultsPromise = getLMDBPageQueryResultsCache().set(pagePath, stringifiedResult);
+  } else {
+    const pageQueryResultsPath = _path.default.join(programDir, `.cache`, `json`, `${pagePath.replace(/\//g, `_`)}.json`);
+
+    await _fsExtra.default.outputFile(pageQueryResultsPath, stringifiedResult);
+  }
+}
+
+async function readPageQueryResult(publicDir, pagePath) {
+  if ((0, _datastore.isLmdbStore)()) {
+    const stringifiedResult = await getLMDBPageQueryResultsCache().get(pagePath);
+
+    if (typeof stringifiedResult === `string`) {
+      return JSON.parse(stringifiedResult);
+    }
+
+    throw new Error(`Couldn't find temp query result for "${pagePath}".`);
+  } else {
+    const pageQueryResultsPath = _path.default.join(publicDir, `..`, `.cache`, `json`, `${pagePath.replace(/\//g, `_`)}.json`);
+
+    return _fsExtra.default.readJSON(pageQueryResultsPath);
+  }
+}
+
 async function writePageData(publicDir, {
   componentChunkName,
   matchPath,
   path: pagePath,
   staticQueryHashes
 }) {
-  const inputFilePath = _path.default.join(publicDir, `..`, `.cache`, `json`, `${pagePath.replace(/\//g, `_`)}.json`);
-
+  const result = await readPageQueryResult(publicDir, pagePath);
   const outputFilePath = getFilePath(publicDir, pagePath);
-  const result = await _fsExtra.default.readJSON(inputFilePath);
   const body = {
     componentChunkName,
     path: pagePath,

@@ -140,18 +140,16 @@ function calcDirtyHtmlFiles(state) {
     }
   }
 
-  /*
   if (state.html.unsafeBuiltinWasUsedInSSR) {
     _reporter.default.warn(`Previous build used unsafe builtin method. We need to rebuild all pages`);
   }
-  */
 
   state.html.trackedHtmlFiles.forEach(function (htmlFile, path) {
     if (htmlFile.isDeleted || !state.pages.has(path)) {
       // FIXME: checking pages state here because pages are not persisted
       // and because of that `isDeleted` might not be set ...
       markActionForPage(path, `delete`);
-    } else if (htmlFile.dirty) { // || state.html.unsafeBuiltinWasUsedInSSR
+    } else if (htmlFile.dirty || state.html.unsafeBuiltinWasUsedInSSR) {
       markActionForPage(path, `regenerate`);
     } else {
       markActionForPage(path, `reuse`);

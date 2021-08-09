@@ -44,9 +44,13 @@ async function runPageQueries({
   const activity = _reporter.default.createProgress(`run page queries`, pageQueryIds.length, 0, {
     id: `page-query-running`,
     parentSpan
-  });
+  }); // TODO: This is hacky, remove with a refactor of PQR itself
 
-  activity.start();
+
+  if (!process.env.GATSBY_EXPERIMENTAL_PARALLEL_QUERY_RUNNING) {
+    activity.start();
+  }
+
   let cancelNotice;
 
   if (process.env.gatsby_executing_command === `develop` && !process.env.GATSBY_EXPERIMENTAL_QUERY_ON_DEMAND && !(0, _gatsbyCoreUtils.isCI)()) {
@@ -77,6 +81,8 @@ modules.exports = {
     cancelNotice();
   }
 
-  activity.done();
+  if (!process.env.GATSBY_EXPERIMENTAL_PARALLEL_QUERY_RUNNING) {
+    activity.done();
+  }
 }
 //# sourceMappingURL=run-page-queries.js.map

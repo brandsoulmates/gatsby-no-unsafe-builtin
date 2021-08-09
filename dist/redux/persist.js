@@ -43,7 +43,7 @@ function reduxWorkerSlicesPrefix(dir) {
   return _path.default.join(dir, `redux.worker.slices_`);
 }
 
-function readFromCache(slices) {
+function readFromCache(slices, optionalPrefix = ``) {
   // The cache is stored in two steps; the nodes and pages in chunks and the rest
   // First we revive the rest, then we inject the nodes and pages into that obj (if any)
   // Each chunk is stored in its own file, this circumvents max buffer lengths
@@ -53,7 +53,7 @@ function readFromCache(slices) {
 
   if (slices) {
     cacheFolder = getWorkerSlicesFolder();
-    return _v.default.deserialize((0, _fsExtra.readFileSync)(reduxWorkerSlicesPrefix(cacheFolder) + (0, _gatsbyCoreUtils.createContentDigest)(slices)));
+    return _v.default.deserialize((0, _fsExtra.readFileSync)(reduxWorkerSlicesPrefix(cacheFolder) + `${optionalPrefix}_` + (0, _gatsbyCoreUtils.createContentDigest)(slices)));
   }
 
   const obj = _v.default.deserialize((0, _fsExtra.readFileSync)(reduxSharedFile(cacheFolder))); // Note: at 1M pages, this will be 1M/chunkSize chunks (ie. 1m/10k=100)
@@ -178,13 +178,13 @@ function safelyRenameToBak(cacheFolder) {
   return bakName;
 }
 
-function writeToCache(contents, slices) {
+function writeToCache(contents, slices, optionalPrefix = ``) {
   // Writing the "slices" also to the "redux" folder introduces subtle bugs when
   // e.g. the whole folder gets replaced some "slices" are lost
   // Thus they get written to dedicated "worker" folder
   if (slices) {
     const cacheFolder = getWorkerSlicesFolder();
-    (0, _fsExtra.outputFileSync)(reduxWorkerSlicesPrefix(cacheFolder) + (0, _gatsbyCoreUtils.createContentDigest)(slices), _v.default.serialize(contents));
+    (0, _fsExtra.outputFileSync)(reduxWorkerSlicesPrefix(cacheFolder) + `${optionalPrefix}_` + (0, _gatsbyCoreUtils.createContentDigest)(slices), _v.default.serialize(contents));
     return;
   } // Note: this should be a transactional operation. So work in a tmp dir and
   // make sure the cache cannot be left in a corruptable state due to errors.
