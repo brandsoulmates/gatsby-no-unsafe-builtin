@@ -34,7 +34,7 @@ function deleteUntouchedPages(
   return deletedPages;
 }
 
-function findChangedPages(oldPages, currentPages) {
+function findChangedPages(currentPages, oldPages) {
   const changedPages = [];
 
   const compareWithoutUpdated = (_left, _right, key) =>
