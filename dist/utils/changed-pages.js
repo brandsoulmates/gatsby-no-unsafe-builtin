@@ -10,15 +10,22 @@ var _redux = require("../redux");
 
 var _lodash = require("lodash");
 
-const {
-  deletePage
-} = _actions.actions;
+const { deletePage } = _actions.actions;
 
-function deleteUntouchedPages(currentPages, timeBeforeApisRan, shouldRunCreatePagesStatefully) {
+function deleteUntouchedPages(
+  currentPages,
+  timeBeforeApisRan,
+  shouldRunCreatePagesStatefully
+) {
   const deletedPages = []; // Delete pages that weren't updated when running createPages.
 
-  currentPages.forEach(page => {
-    if ((shouldRunCreatePagesStatefully || !page.isCreatedByStatefulCreatePages) && page.updatedAt < timeBeforeApisRan && page.path !== `/404.html`) {
+  currentPages.forEach((page) => {
+    if (
+      (shouldRunCreatePagesStatefully ||
+        !page.isCreatedByStatefulCreatePages) &&
+      page.updatedAt < timeBeforeApisRan &&
+      page.path !== `/404.html`
+    ) {
       _redux.store.dispatch(deletePage(page));
 
       deletedPages.push(page.path, `/page-data${page.path}`);
@@ -30,12 +37,34 @@ function deleteUntouchedPages(currentPages, timeBeforeApisRan, shouldRunCreatePa
 function findChangedPages(oldPages, currentPages) {
   const changedPages = [];
 
-  const compareWithoutUpdated = (_left, _right, key) => key === `updatedAt` || undefined;
+  const compareWithoutUpdated = (_left, _right, key) =>
+    key === `updatedAt` || undefined;
+
+  console.log("==========OLD PAGES===============");
+  console.log(oldPages);
+
+  console.log("==========CURRENT PAGES===============");
+  console.log(currentPages);
+
+  console.log("==========DIFF===============");
 
   currentPages.forEach((newPage, path) => {
     const oldPage = oldPages.get(path);
 
-    if (!oldPage || !(0, _lodash.isEqualWith)(newPage, oldPage, compareWithoutUpdated)) {
+    console.log(`currentPath: ${path}`);
+    console.log(`oldPage: ${oldPage}`);
+    console.log(
+      `compareWithoutUpdated: ${(0, _lodash.isEqualWith)(
+        newPage,
+        oldPage,
+        compareWithoutUpdated
+      )}`
+    );
+
+    if (
+      !oldPage ||
+      !(0, _lodash.isEqualWith)(newPage, oldPage, compareWithoutUpdated)
+    ) {
       changedPages.push(path);
     }
   });
@@ -47,7 +76,7 @@ function findChangedPages(oldPages, currentPages) {
   });
   return {
     changedPages,
-    deletedPages
+    deletedPages,
   };
 }
 //# sourceMappingURL=changed-pages.js.map
