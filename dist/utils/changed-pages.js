@@ -34,32 +34,34 @@ function deleteUntouchedPages(
   return deletedPages;
 }
 
-function findChangedPages(currentPages, oldPages) {
+function findChangedPages(oldPages, currentPages) {
   const changedPages = [];
 
-  const compareWithoutUpdated = (_left, _right, key) =>
-    key === `updatedAt` || undefined;
+  const compareWithoutUpdated = (_left, _right, key) => {
+    // console.log({ _left, _right, key });
+    return key === `updatedAt` || undefined;
+  };
 
-  console.log("==========OLD PAGES===============");
-  console.log(oldPages);
+  // console.log("==========OLD PAGES===============");
+  // console.log(oldPages);
 
-  console.log("==========CURRENT PAGES===============");
-  console.log(currentPages);
+  // console.log("==========CURRENT PAGES===============");
+  // console.log(currentPages);
 
-  console.log("==========DIFF===============");
+  // console.log("==========DIFF===============");
 
   currentPages.forEach((newPage, path) => {
     const oldPage = oldPages.get(path);
 
-    console.log(`currentPath: ${path}`);
-    console.log(`oldPage: ${oldPage}`);
-    console.log(
-      `compareWithoutUpdated: ${(0, _lodash.isEqualWith)(
-        newPage,
-        oldPage,
-        compareWithoutUpdated
-      )}`
-    );
+    // console.log(`currentPath: ${path}`);
+    // console.log(`oldPage: ${oldPage}`);
+    // console.log(
+    //   `compareWithoutUpdated: ${(0, _lodash.isEqualWith)(
+    //     newPage,
+    //     oldPage,
+    //     compareWithoutUpdated
+    //   )}`
+    // );
 
     if (
       !oldPage ||
