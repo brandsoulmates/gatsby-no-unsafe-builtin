@@ -126,13 +126,13 @@ async function createPages({
 
   tim.start();
 
-  console.log("====================STORE==============");
-  console.log(store.getState().pages);
+  // console.log("====================STORE==============");
+  // console.log(store.getState().pages);
 
-  console.log(
-    "====================CURRENT PAGES - AFTER DELETED PAGES=============="
-  );
-  console.log(currentPages);
+  // console.log(
+  //   "====================CURRENT PAGES - AFTER DELETED PAGES=============="
+  // );
+  // console.log(currentPages);
 
   const { changedPages } = (0, _changedPages.findChangedPages)(
     currentPages,
