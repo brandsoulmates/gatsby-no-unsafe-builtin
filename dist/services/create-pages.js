@@ -107,10 +107,10 @@ async function createPages({
 
   _reporter.default.verbose(`Checking for deleted pages`);
 
-  console.log(
-    "====================CURRENT PAGES - BEFORE DELETED PAGES=============="
-  );
-  console.log(currentPages);
+  // console.log(
+  //   "====================CURRENT PAGES - BEFORE DELETED PAGES=============="
+  // );
+  // console.log(currentPages);
 
   const deletedPages = (0, _changedPages.deleteUntouchedPages)(
     store.getState().pages,

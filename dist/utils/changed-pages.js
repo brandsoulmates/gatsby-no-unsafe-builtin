@@ -42,11 +42,11 @@ function findChangedPages(oldPages, currentPages) {
     return key === `updatedAt` || undefined;
   };
 
-  // console.log("==========OLD PAGES===============");
-  // console.log(oldPages);
+  console.log("==========OLD PAGES - FIND CHANGED PAGES===============");
+  console.log(oldPages);
 
-  // console.log("==========CURRENT PAGES===============");
-  // console.log(currentPages);
+  console.log("==========CURRENT PAGES - FIND CHANGED PAGES===============");
+  console.log(currentPages);
 
   // console.log("==========DIFF===============");
 
