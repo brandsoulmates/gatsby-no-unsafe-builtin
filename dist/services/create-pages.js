@@ -109,7 +109,9 @@ async function createPages({
 
   console.log("====================STORE==============");
   console.log(store.getState().pages);
-  // console.log(currentPages)
+
+  console.log("====================CURRENT PAGES==============");
+  console.log(currentPages);
 
   const { changedPages } = (0, _changedPages.findChangedPages)(
     currentPages,
