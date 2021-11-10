@@ -35,6 +35,10 @@ async function createPages({
   activity.start();
   const timestamp = Date.now();
   const currentPages = new Map(store.getState().pages);
+  console.log(
+    "====================CURRENT PAGES - BEFORE CREATE PAGES=============="
+  );
+  console.log(currentPages);
   await (0, _apiRunnerNode.default)(
     `createPages`,
     {
@@ -49,6 +53,11 @@ async function createPages({
     }
   );
   activity.end();
+
+  console.log(
+    "====================CURRENT PAGES - BEFORE CREATE PAGES STATEFULLY=============="
+  );
+  console.log(currentPages);
 
   if (shouldRunCreatePagesStatefully) {
     const activity = _reporter.default.activityTimer(`createPagesStatefully`, {
@@ -72,6 +81,11 @@ async function createPages({
     activity.end();
   }
 
+  console.log(
+    "====================CURRENT PAGES - AFTER CREATE PAGES STATEFULLY=============="
+  );
+  console.log(currentPages);
+
   const dataStore = (0, _datastore.getDataStore)();
 
   _reporter.default.info(
@@ -93,6 +107,11 @@ async function createPages({
 
   _reporter.default.verbose(`Checking for deleted pages`);
 
+  console.log(
+    "====================CURRENT PAGES - BEFORE DELETED PAGES=============="
+  );
+  console.log(currentPages);
+
   const deletedPages = (0, _changedPages.deleteUntouchedPages)(
     store.getState().pages,
     timestamp,
@@ -107,10 +126,12 @@ async function createPages({
 
   tim.start();
 
-  console.log("====================STORE==============");
-  console.log(store.getState().pages);
+  // console.log("====================STORE==============");
+  // console.log(store.getState().pages);
 
-  console.log("====================CURRENT PAGES==============");
+  console.log(
+    "====================CURRENT PAGES - AFTER DELETED PAGES=============="
+  );
   console.log(currentPages);
 
   const { changedPages } = (0, _changedPages.findChangedPages)(
